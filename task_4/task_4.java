@@ -13,7 +13,8 @@ public class task_4 {
 
         Queue<Point2D> QueueOfNext = new LinkedList<>();
         int[][] Labirinth = new int[10][10];
-        Point2D StartPoint = new Point2D(InputNumber("Введите x: "), InputNumber("Введите y: "));
+        Point2D StartPoint = new Point2D(InputNumber("Введите точку начального положения (X): "), 
+                                         InputNumber("Введите точку начального положения (Y): "));
         FillingTheLabyrinthWithWallsAndExit(StartPoint, Labirinth, QueueOfNext);
 
         while (QueueOfNext.isEmpty() == false) {
