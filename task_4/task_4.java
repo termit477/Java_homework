@@ -1,90 +1,137 @@
 import java.util.LinkedList;
 import java.util.Queue;
-import java.util.Scanner;
 
 /**
- * task_4
+ * Реализовать волновой алгоритм
  */
 
 public class task_4 {
-    private static Scanner input = new Scanner(System.in);
 
     public static void main(String[] args) {
 
+        int[][] Labirinth = CreatingAMaze.CreatingAMap();
+
         Queue<Point2D> QueueOfNext = new LinkedList<>();
-        int[][] Labirinth = new int[10][10];
-        Point2D StartPoint = new Point2D(InputNumber("Введите точку начального положения (X): "), 
-                                         InputNumber("Введите точку начального положения (Y): "));
-        FillingTheLabyrinthWithWallsAndExit(StartPoint, Labirinth, QueueOfNext);
+        QueueOfNext.add(new Point2D(2, 2));
+        Queue<Point2D> QueueOfBack = new LinkedList<>();
+        QueueOfBack.add(new Point2D(11, 12));
+        Queue<Point2D> ShortPath = new LinkedList<>();
+        ShortPath.add(new Point2D(11, 12));
 
         while (QueueOfNext.isEmpty() == false) {
-            Labirinth = CheckingThePossibilityOfAMove(Labirinth, PullPointOfQueue(QueueOfNext), QueueOfNext);
+            Labirinth = WaveAlgorithm.CheckingThePossibilityOfAMove(Labirinth,
+                    WaveAlgorithm.PullPointOfQueue(QueueOfNext), QueueOfNext);
         }
-        PrintMap(Labirinth);
+        while (QueueOfBack.isEmpty() == false) {
+            Labirinth = WaveAlgorithm.FindTheShortPath(Labirinth,
+                    WaveAlgorithm.PullPointOfQueue(QueueOfBack), QueueOfBack, ShortPath);
+        }
+        while (ShortPath.isEmpty() == false) {
+            Labirinth = CreatingAMaze.FillingInThePath(Labirinth,
+                    WaveAlgorithm.PullPointOfQueue(ShortPath));
+        }
+        String Result = CreatingAMaze.MapColor(Labirinth);
+        System.out.println(Result);
+    }
+}
 
+class CreatingAMaze {
+
+    public static int[][] CreatingAMap() {
+        int[][] map = {
+                { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 },
+                { -1, 00, 00, 00, -1, 00, 00, 00, 00, 00, 00, 00, 00, 00, -1 },
+                { -1, 00, 01, 00, 00, 00, 00, -1, 00, 00, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, 00, 00, -1, 00, 00, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, 00, -1, -1, -1, -1, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, 00, -1, 00, 00, -1, 00, 00, 00, 00, -1 },
+                { -1, -1, -1, 00, -1, 00, -1, 00, 00, -1, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, 00, -1, 00, 00, -1, -1, -1, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, 00, 00, 00, 00, -1, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, 00, 00, 00, 00, -1, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, -1, -1, -1, -1, -1, -1, 00, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, -2, 00, -1 },
+                { -1, 00, 00, 00, -1, -1, -1, -1, -1, -1, -1, 00, 00, 00, -1 },
+                { -1, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, 00, -1 },
+                { -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1, -1 }
+        };
+        return map;
     }
 
-    public static Integer InputNumber(String text) {
-        System.out.print(text);
-        return input.nextInt();
+    public static int[][] FillingInThePath(int[][] lab, Point2D point) {
+        lab[point.i][point.j] = -2;
+        return lab;
     }
 
-    public static void FillingTheLabyrinthWithWallsAndExit(Point2D start, int[][] lab, Queue<Point2D> qu) {
-        lab[start.i][start.j] = 1;
-        lab[1][3] = -1;
-        lab[5][4] = -1;
-        lab[6][4] = -1;
-        lab[5][5] = -1;
-        lab[7][8] = -1;
-        lab[3][7] = -1;
-        lab[8][8] = -2;
-        qu.add(new Point2D(start.i, start.j));
-    }
+    public static String MapColor(int[][] map) {
+        StringBuilder sb = new StringBuilder();
 
-    private static Point2D PullPointOfQueue(Queue<Point2D> qu) {
+        for (int i = 0; i < map.length; i++) {
+            for (int j = 0; j < map[0].length; j++) {
+                switch (map[i][j]) {
+                    case -1:
+                        sb.append(String.format("%4s", "█"));
+                        break;
+                    case -2:
+                        sb.append(String.format("%4s", "╬"));
+                        break;
+                    default:
+                        sb.append(String.format("%4d", map[i][j]));
+                        break;
+                }
+            }
+            sb.append("\n");
+        }
+        return sb.toString();
+    }
+}
+
+class WaveAlgorithm {
+
+    public static Point2D PullPointOfQueue(Queue<Point2D> qu) {
         return qu.remove();
     }
 
-    public static int[][] CheckingThePossibilityOfAMove(int[][] lab, Point2D point, Queue<Point2D> qu) {
-        try {
-            if (lab[point.i - 1][point.j] == 0) {
-                lab[point.i - 1][point.j] = lab[point.i][point.j] + 1;
-                qu.add(new Point2D(point.i - 1, point.j));
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+    public static int[][] CheckingThePossibilityOfAMove(int[][] lab,
+            Point2D point, Queue<Point2D> next) {
+
+        if ((lab[point.i - 1][point.j] == 00) || (lab[point.i - 1][point.j] == -2)) {
+            lab[point.i - 1][point.j] = lab[point.i][point.j] + 1;
+            next.add(new Point2D(point.i - 1, point.j));
         }
-        try {
-            if (lab[point.i][point.j + 1] == 0) {
-                lab[point.i][point.j + 1] = lab[point.i][point.j] + 1;
-                qu.add(new Point2D(point.i, point.j + 1));
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        if ((lab[point.i][point.j + 1] == 00) || (lab[point.i][point.j + 1] == -2)) {
+            lab[point.i][point.j + 1] = lab[point.i][point.j] + 1;
+            next.add(new Point2D(point.i, point.j + 1));
         }
-        try {
-            if (lab[point.i + 1][point.j] == 0) {
-                lab[point.i + 1][point.j] = lab[point.i][point.j] + 1;
-                qu.add(new Point2D(point.i + 1, point.j));
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        if ((lab[point.i + 1][point.j] == 00) || (lab[point.i + 1][point.j] == -2)) {
+            lab[point.i + 1][point.j] = lab[point.i][point.j] + 1;
+            next.add(new Point2D(point.i + 1, point.j));
         }
-        try {
-            if (lab[point.i][point.j - 1] == 0) {
-                lab[point.i][point.j - 1] = lab[point.i][point.j] + 1;
-                qu.add(new Point2D(point.i, point.j - 1));
-            }
-        } catch (ArrayIndexOutOfBoundsException e) {
+        if ((lab[point.i][point.j - 1] == 00) || (lab[point.i][point.j - 1] == -2)) {
+            lab[point.i][point.j - 1] = lab[point.i][point.j] + 1;
+            next.add(new Point2D(point.i, point.j - 1));
         }
         return lab;
     }
 
-    public static void PrintMap(int[][] lab) {
-        for (int i = 0; i < lab.length; i++) {
-            for (int j = 0; j < lab.length; j++) {
-                System.out.print(lab[i][j] + " | ");
-            }
-            System.out.println();
+    public static int[][] FindTheShortPath(int[][] lab, Point2D point, Queue<Point2D> back, Queue<Point2D> way) {
+
+        if (lab[point.i - 1][point.j] == lab[point.i][point.j] - 1) {
+            way.add(new Point2D(point.i - 1, point.j));
+            back.add(new Point2D(point.i - 1, point.j));
+        } else if (lab[point.i][point.j + 1] == lab[point.i][point.j] - 1) {
+            way.add(new Point2D(point.i, point.j + 1));
+            back.add(new Point2D(point.i, point.j + 1));
+        } else if (lab[point.i + 1][point.j] == lab[point.i][point.j] - 1) {
+            way.add(new Point2D(point.i + 1, point.j));
+            back.add(new Point2D(point.i + 1, point.j));
+        } else if (lab[point.i][point.j - 1] == lab[point.i][point.j] - 1) {
+            way.add(new Point2D(point.i, point.j - 1));
+            back.add(new Point2D(point.i, point.j - 1));
         }
+        return lab;
     }
+
 }
 
 class Point2D {
